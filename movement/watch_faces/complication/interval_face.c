@@ -60,21 +60,11 @@ typedef enum {
 //      4. full rounds (0 = no limit)
 //      5. cooldown seconds
 // Work time and break time: positive number = seconds, negative number = minutes
-static const int8_t _default_timers[6][5] = {{0, 40, 20, 0, 0},
-                                            {0, 45, 15, 0, 0},
-                                            {10, 20, 10, 8, 10},
-                                            {0, 35, 0, 0, 0},
-                                            {0, -25, -5, 0, 0},
-                                            {0, -20, -5, 0, 0}};
+static const int8_t _default_timers[1][5] = {{0, 33, 0, 14, 0},};
 
 static const uint8_t _intro_segdata[4][2] = {{1, 8}, {0, 8}, {0, 7}, {1, 7}};
 static const uint8_t _blink_idx[] = {3, 9, 4, 6, 4, 6, 8, 4, 6, 8, 4, 6};
 static const uint8_t _setting_page_idx[] = {1, 0, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4};
-static const int8_t _sound_seq_warmup[] = {BUZZER_NOTE_F6, 8, BUZZER_NOTE_REST, 1, -2, 3, 0};
-static const int8_t _sound_seq_work[] = {BUZZER_NOTE_F6, 8, BUZZER_NOTE_REST, 1, -2, 2, BUZZER_NOTE_C7, 24, 0};
-static const int8_t _sound_seq_break[] = {BUZZER_NOTE_B6, 15, BUZZER_NOTE_REST, 1, -2, 1, BUZZER_NOTE_B6, 16, 0};
-static const int8_t _sound_seq_cooldown[] = {BUZZER_NOTE_C7, 15, BUZZER_NOTE_REST, 1, -2, 1, BUZZER_NOTE_C7, 24, 0};
-static const int8_t _sound_seq_finish[] = {BUZZER_NOTE_C7, 6, BUZZER_NOTE_E7, 6, BUZZER_NOTE_G7, 6, BUZZER_NOTE_C8, 18, 0};
 
 static interval_setting_idx_t _setting_idx;
 static int8_t _ticks;
@@ -309,19 +299,15 @@ static void _set_next_timestamp(interval_face_state_t *state) {
     switch (_timer_run_state) {
     case 0:
         delta = timer.warmup_minutes * 60 + timer.warmup_seconds;
-        sound_seq = (int8_t *)_sound_seq_warmup;
         break;
     case 1:
         delta = timer.work_minutes * 60 + timer.work_seconds;
-        sound_seq = (int8_t *)_sound_seq_work;
         break;
     case 2:
         delta = timer.break_minutes * 60 + timer.break_seconds;
-        sound_seq = (int8_t *)_sound_seq_break;
         break;
     case 3:
         delta = timer.cooldown_minutes * 60 + timer.cooldown_seconds;
-        sound_seq = (int8_t *)_sound_seq_cooldown;
         break;
     default:
         sound_seq = NULL;
@@ -334,7 +320,7 @@ static void _set_next_timestamp(interval_face_state_t *state) {
     watch_date_time target_dt = watch_utility_date_time_from_unix_time(_target_ts, 0);
     movement_schedule_background_task_for_face(state->face_idx, target_dt);
     // play sound
-    watch_buzzer_play_sequence(sound_seq, NULL);
+    watch_buzzer_play_note(BUZZER_NOTE_C7, 150);
 }
 
 static inline bool _is_timer_empty(interval_timer_setting_t *timer) {
@@ -381,7 +367,7 @@ void interval_face_setup(movement_settings_t *settings, uint8_t watch_face_index
         state->face_state = interval_state_waiting;
         for (uint8_t i = 0; i < INTERVAL_TIMERS; i++) state->timer[i].work_rounds = 1;
         // set up default timers
-        for (uint8_t i = 0; i < 6; i++) {
+        for (uint8_t i = 0; i < 1; i++) {
             state->timer[i].warmup_seconds = _default_timers[i][0];
             if (_default_timers[i][1] < 0) state->timer[i].work_minutes = -_default_timers[i][1];
             else state->timer[i].work_seconds = _default_timers[i][1];
@@ -608,7 +594,8 @@ bool interval_face_loop(movement_event_t event, movement_settings_t *settings, v
             state->face_state = interval_state_waiting;
             _init_timer_info(state);
             _face_draw(state, event.subsecond);
-            watch_buzzer_play_sequence((int8_t *)_sound_seq_finish, NULL);
+            // watch_buzzer_play_sequence((int8_t *)_sound_seq_finish, NULL);
+            watch_buzzer_play_note(BUZZER_NOTE_C8, 150);
         }
         break;
     case EVENT_TIMEOUT:
