@@ -3,7 +3,7 @@
 fw_dir="firmware/download"
 sim_dir="firmware/simulate"
 colors=("green" "blue" "red")
-variants=("standard"wh)
+variants=("standard")
 
 if [ -d "$fw_dir" ] ; then
     rm -r "$fw_dir"
